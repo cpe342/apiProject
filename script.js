@@ -67,7 +67,7 @@ client.authorize(function(err,tokens){
 
 function getPokemon(){
     return new Promise((resolve,reject)=>{
-	https.get('https://pokeapi.co/api/v2/pokemon?limit=10', (resp) => {
+	https.get('https://pokeapi.co/api/v2/pokemon?limit=30', (resp) => {
 			let data = '';
 			resp.on('data',(chunk)=>{
 				data+= chunk;
