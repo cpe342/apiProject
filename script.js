@@ -15,6 +15,7 @@ client.authorize(function(err,tokens){
 		return;
 	}
 
+	//Successful connection to spreadsheet
 	else{
 		console.log('connected');
 
@@ -22,13 +23,10 @@ client.authorize(function(err,tokens){
 		getPokemon()
 			.then(response=>{
 				let data = response.results;
-				//console.log(data);
-				for(let i=0;i<data.length;i++){
-					let flag=false;
-					let typehold='';
-					
+				for(let i=0;i<data.length;i++){					
 					getPokemon2(data[i].url)
 					.then(pokes2=>{
+						//Pokemon object with specs
 						let Poke = {
 							id:'',
 							name:'',
@@ -38,6 +36,7 @@ client.authorize(function(err,tokens){
 							ability:'',
 						};
 
+						//Assign pulled API data to obect
 						Poke.id=pokes2.id;
 						Poke.name=pokes2.name;
 						Poke.type=pokes2.types[0].type.name;
@@ -45,18 +44,15 @@ client.authorize(function(err,tokens){
 						Poke.weight=(pokes2.weight);
 						Poke.ability=(pokes2.abilities[0].ability.name);
 
+						//Push to array
 						pokearr.push(Poke);
 
 						//console.log(pokearr);
 
-
+						//Push changes to spreadsheet
 						gsrun(client,pokearr);
 					})
-				
-			
-			
 				}
-
 			})
 			.catch(error=>{
     		console.log(error);
@@ -64,7 +60,7 @@ client.authorize(function(err,tokens){
 	}
 });
 
-
+//First call to API - gets individal API URLs for pokemon in question
 function getPokemon(){
     return new Promise((resolve,reject)=>{
 	https.get('https://pokeapi.co/api/v2/pokemon?limit=30', (resp) => {
@@ -83,6 +79,7 @@ function getPokemon(){
     })
 }
 
+//Pulls data from individual pokemon API call
 function getPokemon2(url){
     return new Promise((resolve,reject)=>{
 	https.get(url, (resp) => {
@@ -101,7 +98,7 @@ function getPokemon2(url){
     })
 }
 
-
+//Google sheets update
 async function gsrun(cl,pokes){
 	const gsapi = google.sheets({version:'v4',auth:cl});
 
@@ -110,9 +107,11 @@ async function gsrun(cl,pokes){
 		range:'Data!A1:B6'
 	};
 
+	//Form data into array pushable to spreadsheet
 	let lines=[['Id','Name','Type','Height (dm)','Weight (hg)','Ability']];
 	let line=[];
 
+	//Ensure each field is own array element
 	for(let i=0;i<pokes.length;i++)
 	{
 		line=[];
@@ -125,6 +124,7 @@ async function gsrun(cl,pokes){
 		lines.push(line);
 	}
 
+	//Push and update spreadsheet scratch variable
 	let dataArray = lines;
 	let newDataArray = dataArray.map(function(r){ 
 		return r;
@@ -137,6 +137,7 @@ async function gsrun(cl,pokes){
 		resource: {values:newDataArray}
 	};
 
+	//Wait on asynch update function of google sheet
 	let res = await gsapi.spreadsheets.values.update(updateOptions);
 }
 
